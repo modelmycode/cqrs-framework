@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/node'
 import { EventWithToken } from 'axon-server-node-api'
 import { Unsubscribable } from 'rxjs'
 
@@ -52,10 +51,7 @@ export class EventProcessorActiveState {
   }
 
   private startEventStream(fromToken: number) {
-    if (this.eventStream) {
-      Sentry.captureMessage('Multiple event stream requested')
-      return
-    }
+
     this.eventStream = this.eventChannel.listEvents({
       trackingToken: fromToken,
       next: (v) => this.eventBuffer.add(v),
@@ -178,7 +174,6 @@ export class EventProcessorActiveState {
       await this.trackingTokenStore.setToken(this.tokenId, token)
     } catch (e) {
       if (failedTimes >= 3) {
-        Sentry.captureException(e)
         throw e
       }
       failedTimes++
@@ -200,10 +195,6 @@ export class EventProcessorActiveState {
       this.logger.error(
         `Last saved ${this.lastSavedClientId}, in store ${storeId}`,
       )
-      Sentry.withScope((scope) => {
-        scope.setExtras({ saved: this.lastSavedClientId, store: storeId })
-        Sentry.captureMessage('Last saved client id missing in store')
-      })
     }
   }
 }

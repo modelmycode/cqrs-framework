@@ -45,7 +45,6 @@ export * from './application/message-bus';
 export * from './application/axon-aggregate-event-sourcing';
 export * from './application/headers/command-headers';
 export * from './application/headers/query-headers';
-export * from './application/headers/response-headers';
 export * from './application/command-context';
 export * from './application/event-handler';
 export * from './application/axon-metadata';

@@ -1,7 +1,6 @@
 import { IncomingMessage, OutgoingMessage } from 'http'
 
 import ecsFormat from '@elastic/ecs-winston-format'
-import * as Sentry from '@sentry/node'
 import { AxiosError } from 'axios'
 import { Colorizer } from 'logform'
 import winston from 'winston'
@@ -128,9 +127,6 @@ const log = (
     level: level || 'info',
     message,
   })
-  if (isProduction && logLevel !== 'error') {
-    Sentry.addBreadcrumb({ category: 'console', message })
-  }
 }
 const error = (
   msgOrErr: string | Error,
@@ -172,8 +168,6 @@ const error = (
       ...defaultMeta,
       ...(reportError === true ? {} : reportError),
     })
-  } else {
-    Sentry.addBreadcrumb({ category: 'console', message })
   }
 }
 
@@ -255,22 +249,7 @@ function reportToSentry({
   message: string
   err: Error | undefined
 } & Record<string, any>) {
-  Sentry.withScope((scope) => {
-    if (message && err) {
-      extras.errMessage = err.message
-      err.message = message
-    }
-    if (isAxiosError(err)) {
-      extras.axios = formatAxiosError(err)
-    }
-    scope.setExtras(extras)
-
-    if (err) {
-      Sentry.captureException(err)
-    } else {
-      Sentry.captureMessage(message)
-    }
-  })
+//
 }
 
 function formatAxiosError(err: AxiosError) {

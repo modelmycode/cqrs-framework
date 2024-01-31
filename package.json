@@ -1,6 +1,6 @@
 {
   "name": "@ebd-connect/cqrs-framework",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publishConfig": {
     "access": "restricted"
   },
@@ -13,8 +13,9 @@
   "keywords": [],
   "author": "EBD Connect Ltd",
   "contributors": [
+    "Evan Liu",
     "Arjan Noordhoek",
-    "Evan Liu"
+    "Mark Coleman"
   ],
   "license": "LGPL-3.0-only",
   "devDependencies": {

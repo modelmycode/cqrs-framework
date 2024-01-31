@@ -1,4 +1,3 @@
-import {Type} from '../utils/lang'
 import {CommandResponse, QueryResponse} from 'axon-server-node-api'
 import {DatabaseError} from 'pg'
 import {from} from 'rxjs'
@@ -35,6 +34,7 @@ import {decodeQueryWithHeaders} from './headers/query-headers'
 import {commandSchemas} from "../api/message/command-schemas";
 import {commandSchemaError} from "../api/error/common-error";
 import {errorCode} from "../api/error/error-code";
+import {Type} from "../utils/lang";
 
 interface AxonAppConfig {
   connection: AxonServerConnectionOptions
@@ -94,6 +94,8 @@ export class AxonApplication {
       const {postgres, models} = this.config.database
       if (postgres) {
         await postgresDb.connect(postgres)
+          .then(() => this.logger.log(`${this.config.database?.postgres?.database ?? ''} connected`))
+          .catch((e) => this.logger.error(e))
       }
       for (const model of models || []) {
         await model.initDatabase()

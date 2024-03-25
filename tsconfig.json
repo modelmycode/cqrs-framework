@@ -10,14 +10,17 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "es2015",
-    "module": "esnext",
-    "lib": ["es2020", "dom"],
+    "lib": [
+      "es2017",
+      "dom"
+    ],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "strict": true,
     "useUnknownInCatchVariables": false,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "module": "commonjs",
     "paths": {},
     "outDir": "./dist"
   },

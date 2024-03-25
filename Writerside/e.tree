@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE instance-profile
+        SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
+
+<instance-profile id="e"
+                 name="EBDConnect-CQRS-Framework"
+                  start-page="Overview.md">
+
+    <toc-element topic="Overview.md">
+        <toc-element topic="The-Gateway-Service.md"/>
+        <toc-element topic="The-Command-Service.md"/>
+        <toc-element topic="The-Automation-Service.md"/>
+        <toc-element topic="The-Query-Projector-Service.md"/>
+        <toc-element topic="The-Query-Service.md"/>
+    </toc-element>
+    <toc-element topic="Project-Structure.md"/>
+    <toc-element topic="The-Gateway-Service-Detail.md"/>
+    <toc-element topic="The-Command-Service-Detail.md"/>
+    <toc-element topic="The-CommandHandler.md">
+        <toc-element topic="Application-Layer.md"/>
+        <toc-element topic="Domain-Layer.md"/>
+    </toc-element>
+</instance-profile>

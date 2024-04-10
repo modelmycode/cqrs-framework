@@ -15,7 +15,7 @@
     </toc-element>
     <toc-element topic="Project-Structure.md"/>
     <toc-element topic="The-Gateway-Service-Detail.md"/>
-    <toc-element topic="The-Command-Service-Detail.md"/>
+    <toc-element topic="The-Command-Service-Detail.topic"/>
     <toc-element topic="The-CommandHandler.md">
         <toc-element topic="Application-Layer.md"/>
         <toc-element topic="Domain-Layer.md"/>

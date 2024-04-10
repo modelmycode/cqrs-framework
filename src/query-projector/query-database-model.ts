@@ -1,5 +1,5 @@
-import { DatabaseModel } from '../database/database-model'
-import { postgresDb } from '../framework-services'
+import {DatabaseModel} from '../database/database-model'
+import {postgresDb} from '../framework-services'
 
 export class QueryDatabaseModel<TData = unknown> implements DatabaseModel {
   constructor(public readonly tableName: string) {
@@ -78,6 +78,13 @@ export class QueryDatabaseModel<TData = unknown> implements DatabaseModel {
     )
     const data = result?.map((item) => item.data)
     return findAll ? data : data?.[0]
+  }
+
+  public async findAll(): Promise<TData[] | null> {
+    const result = await postgresDb.query(
+      `SELECT "data" FROM "${this.tableName}"`
+    )
+    return  result?.map((item) => item.data)
   }
 
   public async findAllByField(

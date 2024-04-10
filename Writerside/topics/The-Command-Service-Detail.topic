@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic SYSTEM "https://resources.jetbrains.com/writerside/1.0/xhtml-entities.dtd">
+<topic xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/topic.v2.xsd"
+       id="The-Command-Service-Detail" title="The Command Service">
+
+    <title>
+        The Command Service
+    </title>
+    <p>The write side of CQRS is handled by the command service. Only the command service uses the concept of
+        aggregates, as the command service is the only service that will actually change the state of a system.
+        There are alternatives that do not use aggregates at all, but for now we prefer to use them as it allows nice
+        way to enforce consistent use of applying state.
+        <img src="command-service.png" alt="command-service.png"/></p>
+    <chapter title="API definition" id="api-definition">
+        <p>First step in being able to use commands will be to define the commands.
+            This is pretty straight-forward but we do have to take into account that we have two ways to define a
+            command:</p>
+        <list>
+            <li>The first way, and preferred way, is sending a command as send and forget. We are living in an async
+                world and should not expect results back. The only response we should expect is that the command has
+                been received and will be processed.
+            </li>
+            <li>The second ways is a so called
+                <control>responding</control>
+                command. The definition will include what will be returned after the command has successfully been
+                executed.
+            </li>
+        </list>
+        <chapter title="Command definition" id="command-definition">
+            <p>//libs/api/web-translator-command/src/translation/approve-translation-price.ts</p>
+
+            <code-block lang="Typescript">
+                import { command, Command } from '@ebd-connect/cqrs-framework';
+
+                @command('ApproveTranslationPrice')
+                export class ApproveTranslationPrice implements Command {
+                constructor(
+                public readonly translationId : string,
+                public readonly approved : boolean,
+                ) {}
+
+                }
+            </code-block>
+        </chapter>
+        <chapter title="Responding command definition" id="responding-command-definition">
+            <p>//libs/api/web-translator-command/src/translation/submit-translation-request.ts</p>
+
+            <code-block lang="Typescript">
+                import { command, RespondingCommand } from '@ebd-connect/cqrs-framework';
+
+                @command('SubmitTranslationRequest')
+                export class SubmitTranslationRequest implements RespondingCommand {
+                constructor(
+                public readonly text : string,
+                public readonly translationId : string,
+                ) {}
+                $responseType!: { translationId : string }
+                }
+            </code-block>
+        </chapter>
+    </chapter>
+    <chapter title="Command Handler" id="command-handler">
+        <p>A command-handler is the core functionality of the write side of a CQRS architecture. Because of this the
+            project it belongs to is
+            <control>ContextName-core</control>
+            . For example
+            <control>web-translator-core</control>
+            .
+        </p>
+        <p>It belongs to the application layer and needs to be registered with the command-service.
+            Command-handlers are organised per aggregate and are called
+            <control>AggregateName</control>
+            ApplicationService.
+        </p>
+
+        <code-block lang="Typescript">
+            import { ApproveTranslationPrice } from '@api/web-translator-command';
+            import { translatorService } from '@backend/infrastructure';
+            import { SubmitTranslationRequest } from '@api/web-translator-command';
+            import { Translation } from '../domain/translation';
+            import { CommandContext, commandHandler,CommandReturnType } from '@ebd-connect/cqrs-framework';
+
+            export class TranslationApplicationService {
+            @commandHandler({ name: 'ApproveTranslationPrice' })
+            async approveTranslationPrice(command: ApproveTranslationPrice, { eventSourcing }: CommandContext) {
+            await eventSourcing.load(Translation, command.translationId, (eventStream) =&gt;
+            eventStream.approveTranslationPrice(command )
+            );
+            }
+
+            @commandHandler({ name: 'SubmitTranslationRequest' })
+            async submitTranslationRequest(command: SubmitTranslationRequest, { eventSourcing }: CommandContext):
+            CommandReturnType&lt;SubmitTranslationRequest&gt; {
+            const translationId= command?.translationId ? command?.translationId : crypto.randomUUID();
+
+            await eventSourcing.create(Translation, translationId, (eventStream) =&gt;
+            eventStream.submitTranslationRequest(translationId, command)
+            );
+            return { translationId };
+            }
+            }
+
+        </code-block>
+        <p>To provide a clean way to register the command handlers we use a separate AggregateConfig</p>
+
+        <code-block lang="Typescript">
+            import { TranslationApplicationService } from './translation-application-service';
+            import { Type } from '@ebd-connect/cqrs-framework';
+
+            export const webTranslatorCommandHandlers: Type[] = [
+            //services
+            TranslationApplicationService,
+            ];
+        </code-block>
+        <p>This is what we use in the command service to register the command handlers.
+            // Apps/mmc-command/src/main.ts</p>
+
+        <code-block lang="Typescript">
+            import { webTranslatorCommandHandlers } from '@backend/web-translator-core';
+
+            import {
+            AxonApplication,
+            ClientIdentification,
+            configLogger,
+            credentials,
+            } from '@ebd-connect/cqrs-framework';
+
+            const isProduction = false;
+            configLogger();
+
+            const axonConnector = new AxonApplication({
+            commandHandlers: [
+            // contextCommandHandlers
+            ...webTranslatorCommandHandlers,
+            ],
+            connection: {
+            serviceClientInit: {
+            address: process.env.AXON_HOST ?? 'localhost:8124',
+            credentials: credentials.createInsecure(),
+            },
+            clientIdentification: new ClientIdentification()
+            .setComponentName('mmc-command')
+            .setClientId(isProduction ? crypto.randomUUID() : 'local'),
+            forceStayOnSameConnection: !isProduction,
+            },
+            });
+            axonConnector.connect().catch((error) =&gt; console.error(error.message));
+
+        </code-block>
+    </chapter>
+
+</topic>

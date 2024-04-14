@@ -1,9 +1,9 @@
-import {CommandResponse, QueryResponse} from 'axon-server-node-api'
+import {CommandResponse, EventWithToken, QueryResponse} from 'axon-server-node-api'
 import {DatabaseError} from 'pg'
 import {from} from 'rxjs'
 import {ValidationError} from 'yup'
 
-import {TrackingEventProcessor} from '../axon-event-processor/tracking-event-processor'
+import {OverrideProcess, TrackingEventProcessor} from '../axon-event-processor/tracking-event-processor'
 import {TrackingTokenStore} from '../axon-event-processor/tracking-token-store'
 import {AxonServerConnectionFactory} from '../axon-server-connector/axon-server-connection-factory'
 import {
@@ -51,6 +51,7 @@ interface AxonAppConfig {
 
     /** If it is a new service, if to replay history events from -1, or only the newer events. */
     replayHistory?: boolean
+    overRideProcess?: OverrideProcess
   }
 
   database?: {
@@ -296,6 +297,7 @@ export class AxonApplication {
       handlers,
       this.config.eventProcessor?.queueHandlers,
       this.config.eventProcessor?.replayHistory,
+      this.config.eventProcessor?.overRideProcess,
     )
     this.eventProcessors.push(eventProcessor)
     await eventProcessor.start()

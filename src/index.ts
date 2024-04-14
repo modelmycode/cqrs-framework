@@ -52,4 +52,6 @@ export * from './query-rebuilding/query-rebuilding-app';
 export * from './automation/automation-factory';
 export * from './framework-services';
 export * from './database/postgres-db'
+export * from './database/mssql-db'
 export * from './query-rebuilding/query-rebuild-group'
+export * from './axon-event-processor/tracking-event-processor'

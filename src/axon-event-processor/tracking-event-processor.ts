@@ -2,7 +2,7 @@ import {Type} from '../utils/lang'
 import {EventWithToken} from 'axon-server-node-api'
 import {BehaviorSubject, Observable} from 'rxjs'
 import {distinctUntilChanged} from 'rxjs/operators'
-
+import {Event} from "axon-server-node-api";
 import {getAxonMetadataValue} from '../application/axon-metadata'
 import {deserializeObject} from '../application/axon-serialization'
 import {EventHandler} from '../application/event-handler'
@@ -19,6 +19,7 @@ import {EventProcessorIdleState} from './utils/event-processor-idle-state'
 
 type ServiceLocator = <T>(type: Type<T>) => T | null
 
+export type OverrideProcess = (name: string, aggregateId: string, payload: any) => void
 let nextProcessorId = 1
 
 export class TrackingEventProcessor implements EventProcessor {
@@ -50,6 +51,7 @@ export class TrackingEventProcessor implements EventProcessor {
     }
   }
 
+
   constructor(
     readonly name: string,
     readonly clientId: string,
@@ -58,8 +60,9 @@ export class TrackingEventProcessor implements EventProcessor {
     readonly trackingTokenStore: TrackingTokenStore,
     readonly serviceLocator: ServiceLocator,
     handlers: Type[],
-    private readonly queueHandlers = false,
-    private readonly replayHistory = false,
+    private readonly queueHandlers?: boolean | undefined,
+    private readonly replayHistory?: boolean | undefined,
+    private overrideProcess?: OverrideProcess
   ) {
     this.tokenId = TrackingTokenStore.generateTokenId(
       this.componentName,
@@ -80,6 +83,7 @@ export class TrackingEventProcessor implements EventProcessor {
     }
     this.logger.log(`Stopped [${this.name}#${this.processorId}]`)
   }
+
 
   private async activateProcessing(startToken: number) {
     this.logger.log(`Activating ${this.name}#${this.processorId}`)
@@ -103,13 +107,14 @@ export class TrackingEventProcessor implements EventProcessor {
         this.eventChannel,
         this.trackingTokenStore,
         this.activateProcessing.bind(this),
-        this.replayHistory,
+        this.replayHistory ?? false,
       )
       await this.idleState.activate()
     }
   }
 
   private async startActiveState(startToken: number) {
+    const pe = this.processEventOverride ? this.processEventOverride.bind(this) : this.processEvent.bind(this)
     if (!this.activeState) {
       this.activeState = new EventProcessorActiveState(
         this.tokenId,
@@ -117,12 +122,27 @@ export class TrackingEventProcessor implements EventProcessor {
         this.utils,
         this.eventChannel,
         this.trackingTokenStore,
-        this.processEvent.bind(this),
+        pe,
         this.deactivateProcessing.bind(this),
       )
     }
     await this.activeState.activate(startToken)
     this.isActiveSubject.next(true)
+  }
+
+  private processEventOverride = async (eventWithToken: EventWithToken) => {
+    try {
+      const event = eventWithToken.getEvent()
+      const payload = event?.getPayload()
+      if (!event || !payload || !this.overrideProcess) return
+      this.overrideProcess(
+        payload.getType(),
+        event.getAggregateIdentifier(),
+        deserializeObject(payload),
+      )
+    } catch (error) {
+      this.logger.error(error)
+    }
   }
 
   private processEvent = async (eventWithToken: EventWithToken) => {

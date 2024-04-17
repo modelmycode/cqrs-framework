@@ -1,7 +1,6 @@
 import { Event } from 'axon-server-node-api'
 import { firstValueFrom } from 'rxjs'
 import { toArray } from 'rxjs/operators'
-import { v4 as uuid } from 'uuid'
 
 import { AxonServerContextConnection } from '../axon-server-connector/axon-server-context-connection'
 import {
@@ -12,6 +11,7 @@ import {
 import { logger } from '../logging/logger'
 import { axonMetadataValue } from './axon-metadata'
 import { deserializeObject, serializeObject } from './axon-serialization'
+import * as crypto from "node:crypto";
 
 export class AxonAggregateEventSourcing extends AggregateEventSourcing {
   private readonly logger = logger.forContext('EventSourcing')
@@ -45,7 +45,7 @@ export class AxonAggregateEventSourcing extends AggregateEventSourcing {
         this.publishAxonEvents(
           events.map((msg) => {
             const event = new Event()
-              .setMessageIdentifier(uuid())
+              .setMessageIdentifier(crypto.randomUUID())
               .setAggregateType(msg.aggregateType)
               .setAggregateIdentifier(msg.aggregateIdentifier)
               .setAggregateSequenceNumber(msg.sequenceNumber)

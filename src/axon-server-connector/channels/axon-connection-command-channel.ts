@@ -14,8 +14,6 @@ import {
   ProcessingKey,
 } from 'axon-server-node-api'
 import { Unsubscribable } from 'rxjs'
-import { v4 as uuid } from 'uuid'
-
 import { AxonServerConnectorLogger } from '../axon-server-connector-logger'
 import {
   AxonServiceClientInit,
@@ -122,7 +120,7 @@ export class AxonConnectionCommandChannel {
     if (!this.stream) return
 
     const message = new CommandSubscription()
-      .setMessageId(uuid())
+      .setMessageId(crypto.randomUUID())
       .setCommand(commandName)
       .setClientId(this.clientId)
       .setComponentName(this.componentName)
@@ -134,7 +132,7 @@ export class AxonConnectionCommandChannel {
     if (!this.stream) return
 
     const message = new CommandSubscription()
-      .setMessageId(uuid())
+      .setMessageId(crypto.randomUUID())
       .setCommand(commandName)
       .setClientId(this.clientId)
       .setComponentName(this.componentName)
@@ -142,7 +140,7 @@ export class AxonConnectionCommandChannel {
   }
 
   private fulfilledCommand(command: Command): Command {
-    const messageId = command.getMessageIdentifier() || uuid()
+    const messageId = command.getMessageIdentifier() || crypto.randomUUID()
     const instructions = command.getProcessingInstructionsList() || []
     if (!instructions.find((v) => v.getKey() === ProcessingKey.ROUTING_KEY)) {
       instructions.push(
@@ -245,7 +243,7 @@ export class AxonConnectionCommandChannel {
 
     response.setRequestIdentifier(command.getMessageIdentifier())
     if (!response.getMessageIdentifier()) {
-      response.setMessageIdentifier(uuid())
+      response.setMessageIdentifier(crypto.randomUUID())
     }
 
     this.stream?.write(

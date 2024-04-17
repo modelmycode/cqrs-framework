@@ -25,7 +25,6 @@ interface EventMessage {
 
 interface EventStore {
   load(aggregateIdentifier: string): Promise<AggregateEvent[]>
-
   publish(events: Array<EventMessage>): Promise<void>
 }
 
@@ -163,6 +162,7 @@ export class AggregateEventSourcing {
 
     return events
   }
+
 
   private async publish(
     aggregateType: string,

@@ -1,8 +1,8 @@
 {
   "name": "@ebd-connect/cqrs-framework",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publishConfig": {
-    "access": "restricted"
+    "access": "public"
   },
   "description": "",
   "main": "dist/src/index.js",
@@ -42,11 +42,11 @@
     "dotenv": "^16.0.1",
     "i18next": "^21.8.10",
     "logform": "^2.4.0",
+    "mssql": "^10.0.2",
     "pg": "^8.7.3",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.5.5",
     "tslib": "^2.6.2",
-    "uuid": "^8.3.2",
     "winston": "^3.7.2",
     "winston-transport": "^4.5.0",
     "yup": "^0.32.11"

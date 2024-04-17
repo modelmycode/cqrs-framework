@@ -13,7 +13,6 @@ import {
   ScheduleEventRequest,
 } from 'axon-server-node-api'
 import { Observable, Unsubscribable } from 'rxjs'
-import { v4 as uuid } from 'uuid'
 
 import { AxonServerConnectorLogger } from '../axon-server-connector-logger'
 import {
@@ -247,7 +246,7 @@ export class AxonConnectionEventChannel {
   // noinspection JSMethodCanBeStatic (for WebStorm)
   private fulfilledEvent(event: Event): Event {
     return event
-      .setMessageIdentifier(event.getMessageIdentifier() || uuid())
+      .setMessageIdentifier(event.getMessageIdentifier() || crypto.randomUUID())
       .setTimestamp(event.getTimestamp() || Date.now())
   }
 }

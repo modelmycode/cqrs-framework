@@ -9,7 +9,6 @@ import {
   PlatformInfo,
   PlatformOutboundInstruction,
 } from 'axon-server-node-api'
-import { v4 as uuid } from 'uuid'
 
 import { AxonServerConnectorLogger } from '../axon-server-connector-logger'
 import {
@@ -209,7 +208,7 @@ export class AxonConnectionControlChannel {
   private sendHeartbeat(onAct: (act: InstructionAck) => void) {
     if (!this.stream) return
 
-    const instructionId = uuid()
+    const instructionId = crypto.randomUUID()
     this.instructionMap.add(instructionId, onAct)
     this.stream.write(
       new PlatformInboundInstruction()

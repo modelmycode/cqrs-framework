@@ -12,7 +12,6 @@ import {
   QuerySubscription,
 } from 'axon-server-node-api'
 import { Observable, Unsubscribable } from 'rxjs'
-import { v4 as uuid } from 'uuid'
 
 import { AxonServerConnectorLogger } from '../axon-server-connector-logger'
 import {
@@ -116,7 +115,7 @@ export class AxonConnectionQueryChannel {
     if (!this.stream) return
 
     const message = new QuerySubscription()
-      .setMessageId(uuid())
+      .setMessageId(crypto.randomUUID())
       .setQuery(queryName)
       .setClientId(this.clientId)
       .setComponentName(this.componentName)
@@ -127,7 +126,7 @@ export class AxonConnectionQueryChannel {
     if (!this.stream) return
 
     const message = new QuerySubscription()
-      .setMessageId(uuid())
+      .setMessageId(crypto.randomUUID())
       .setQuery(queryName)
       .setClientId(this.clientId)
       .setComponentName(this.componentName)
@@ -136,7 +135,7 @@ export class AxonConnectionQueryChannel {
 
   private fulfilledQuery(query: QueryRequest): QueryRequest {
     return query
-      .setMessageIdentifier(query.getMessageIdentifier() || uuid())
+      .setMessageIdentifier(query.getMessageIdentifier() || crypto.randomUUID())
       .setTimestamp(query.getTimestamp() || Date.now())
       .setClientId(query.getClientId() || this.clientId)
       .setComponentName(query.getComponentName() || this.componentName)
@@ -207,13 +206,13 @@ export class AxonConnectionQueryChannel {
     const sendResponse = (response: QueryResponse) => {
       response.setRequestIdentifier(requestId)
       if (!response.getMessageIdentifier()) {
-        response.setMessageIdentifier(uuid())
+        response.setMessageIdentifier(crypto.randomUUID())
       }
       this.stream?.write(new QueryProviderOutbound().setQueryResponse(response))
     }
     const sendComplete = () => {
       const message = new QueryComplete()
-        .setMessageId(uuid())
+        .setMessageId(crypto.randomUUID())
         .setRequestId(requestId)
       this.stream?.write(new QueryProviderOutbound().setQueryComplete(message))
     }

@@ -36,15 +36,18 @@ import {commandSchemaError} from "../api/error/common-error";
 import {errorCode} from "../api/error/error-code";
 import {Type} from "../utils/lang";
 
+export type OverRideCommandHandler = (commandName: string, payload: any, context: CommandContext) => Promise<void>
+
 interface AxonAppConfig {
   connection: AxonServerConnectionOptions
 
   commandHandlers?: Type[]
+  commandGenericHandlers?: string[]
   queryHandlers?: Type[]
   queryProjectors?: Type[]
   processors?: Type[]
   eventHandlers?: Type[]
-
+  overRideCommandHandler?: OverRideCommandHandler
   eventProcessor?: {
     /** If to queue event handlers, or run handlers for the same event in parallel */
     queueHandlers?: boolean
@@ -81,7 +84,7 @@ export class AxonApplication {
     )
     await messageBus.connect(connection)
 
-    const {commandHandlers, queryHandlers, processors} = this.config
+    const {commandHandlers, commandGenericHandlers, queryHandlers, processors} = this.config
     const eventHandlers = Array.from(
       new Set([
         ...(processors || []),
@@ -110,6 +113,12 @@ export class AxonApplication {
       await this.registerCommandHandlers(
         connection,
         commandHandlers,
+        eventSourcing,
+      )
+      if (commandGenericHandlers)
+      await this.registerGenericCommandHandlers(
+        connection,
+        commandGenericHandlers,
         eventSourcing,
       )
     }
@@ -225,6 +234,53 @@ export class AxonApplication {
         )
       })
     })
+  }
+
+  private async registerGenericCommandHandlers(
+    connection: AxonServerContextConnection,
+    handlerNames: string[],
+    eventSourcing: AxonAggregateEventSourcing,
+  ) {
+    new Set(handlerNames).forEach((handlerName) => {
+        connection.commandChannel.registerCommandHandler(
+          handlerName,
+          async (command) => {
+              const request = decodeCommandWithHeaders(command)
+
+            try {
+              const payload =  request.payload
+
+
+              const metadata: EventMetadata = {}
+              const context: CommandContext = {
+                headers: {},
+                eventSourcing: eventSourcing.forContext(metadata),
+              }
+              console.log(`run command :`,handlerName,'==',  payload)
+              if (this.config.overRideCommandHandler)
+                this.config.overRideCommandHandler(handlerName, payload, context)
+                return new CommandResponse()
+
+            } catch (error) {
+              const message =
+                error instanceof ValidationError
+                  ? toErrorMessage(
+                    new BackendError(
+                      commandSchemaError,
+                      error.message,
+                      false,
+                      {type: error.type, path: error.path},
+                    ),
+                  )
+                  : toErrorMessage(error)
+              return new CommandResponse()
+                .setErrorCode(message.getErrorCode())
+                .setErrorMessage(message)
+            }
+          },
+          100,
+        )
+      })
   }
 
   private registerQueryHandlers(

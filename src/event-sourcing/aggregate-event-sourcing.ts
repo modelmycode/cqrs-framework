@@ -9,14 +9,14 @@ export interface EventMetadata {
   [key: string]: string | number | boolean | undefined
 }
 
-interface AggregateEvent {
+export interface AggregateEvent {
   payload: Event
   name: string
   timestamp: number
   metadata?: EventMetadata
 }
 
-interface EventMessage {
+export interface EventMessage {
   aggregateType: string
   aggregateIdentifier: string
   event: AggregateEvent
@@ -164,7 +164,7 @@ export class AggregateEventSourcing {
   }
 
 
-  private async publish(
+  public async publish(
     aggregateType: string,
     aggregateIdentifier: string,
     sequenceNumberStart: number,

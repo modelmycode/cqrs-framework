@@ -21,6 +21,7 @@ export interface EventMessage {
   aggregateIdentifier: string
   event: AggregateEvent
   sequenceNumber: number
+  prefix?: string
 }
 
 interface EventStore {
@@ -38,12 +39,12 @@ export class AggregateEventSourcing {
     type: Type<T>,
     aggregateIdentifier: string,
     command: (aggregate: T) => Promise<void> | void,
+    prefix?: string
   ): Promise<Event[]> {
     const events = await this.execute(new type(), command)
-    return this.publish(type.name, aggregateIdentifier, 0, events)
+    return this.publish(type.name, aggregateIdentifier, 0, events, prefix)
   }
-
-  /**
+   /**
    * Load an existing aggregate instance by id and then execute a command.
    * The command has no side effects outside of the aggregate,
    * so can be executed again in case of concurrency error.
@@ -169,6 +170,7 @@ export class AggregateEventSourcing {
     aggregateIdentifier: string,
     sequenceNumberStart: number,
     events: AggregateEvent[],
+    prefix?: string
   ): Promise<Event[]> {
     await this.eventStore.publish(
       events.map((event, index) => ({
@@ -176,6 +178,7 @@ export class AggregateEventSourcing {
         aggregateType,
         aggregateIdentifier,
         sequenceNumber: sequenceNumberStart + index,
+        prefix,
       })),
     )
     return events.map((v) => v.payload)

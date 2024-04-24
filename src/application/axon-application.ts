@@ -36,11 +36,10 @@ import {commandSchemaError} from "../api/error/common-error";
 import {errorCode} from "../api/error/error-code";
 import {Type} from "../utils/lang";
 
-export type OverRideCommandHandler = (commandName: string, payload: any, context: CommandContext) => Promise<void>
+export type OverRideCommandHandler = (commandName: string, payload: any, context: CommandContext, connection: AxonServerContextConnection) => Promise<any>
 
 interface AxonAppConfig {
   connection: AxonServerConnectionOptions
-
   commandHandlers?: Type[]
   commandGenericHandlers?: string[]
   queryHandlers?: Type[]
@@ -256,10 +255,16 @@ export class AxonApplication {
                 headers: {},
                 eventSourcing: eventSourcing.forContext(metadata),
               }
-              console.log(`run command :`,handlerName,'==',  payload)
-              if (this.config.overRideCommandHandler)
-                this.config.overRideCommandHandler(handlerName, payload, context)
-                return new CommandResponse()
+
+              if (this.config.overRideCommandHandler) {
+                const result = await this.config.overRideCommandHandler(handlerName, payload, context, connection)
+                if (result) {
+                  return new CommandResponse().setPayload(
+                    serializeObject(result as any),
+                  )
+                }
+              }
+              return new CommandResponse()
 
             } catch (error) {
               const message =

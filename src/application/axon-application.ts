@@ -66,7 +66,7 @@ interface AxonAppConfig {
 
 export class AxonApplication {
   private readonly logger = logger.forContext('Axon')
-
+  public eventSourcing: AxonAggregateEventSourcing | undefined
   private connectionFactory = new AxonServerConnectionFactory(
     this.config.connection,
     this.logger,
@@ -106,21 +106,22 @@ export class AxonApplication {
     }
 
     // -- Command
-    if (commandHandlers && commandHandlers.length > 0) {
-      const eventSourcing = new AxonAggregateEventSourcing()
-      await eventSourcing.connect(connection)
-      await this.registerCommandHandlers(
-        connection,
-        commandHandlers,
-        eventSourcing,
-      )
+    if ((commandHandlers && commandHandlers.length > 0) || commandGenericHandlers?.length) {
+      this.eventSourcing = new AxonAggregateEventSourcing()
+      await this.eventSourcing.connect(connection)
+      if (commandHandlers)
+        await this.registerCommandHandlers(
+          connection,
+          commandHandlers,
+          this.eventSourcing,
+        )
       if (commandGenericHandlers)
-      await this.registerGenericCommandHandlers(
-        connection,
-        commandGenericHandlers,
-        eventSourcing,
-      )
+        await this.registerGenericCommandHandlers(
+          connection,
+          commandGenericHandlers,
+        )
     }
+
 
     // -- Query
     if (queryHandlers && queryHandlers.length > 0) {
@@ -128,7 +129,7 @@ export class AxonApplication {
     }
 
     // -- Event & Automation
-    if (eventHandlers.length > 0) {
+    if (eventHandlers.length > 0 || commandGenericHandlers?.length) {
       if (!this.config.database?.postgres)
         throw new Error('Event handling requires postgres database config')
 
@@ -235,57 +236,56 @@ export class AxonApplication {
     })
   }
 
-  private async registerGenericCommandHandlers(
+  public async registerGenericCommandHandlers(
     connection: AxonServerContextConnection,
     handlerNames: string[],
-    eventSourcing: AxonAggregateEventSourcing,
   ) {
     new Set(handlerNames).forEach((handlerName) => {
-        connection.commandChannel.registerCommandHandler(
-          handlerName,
-          async (command) => {
-              const request = decodeCommandWithHeaders(command)
+      connection.commandChannel.registerCommandHandler(
+        handlerName,
+        async (command) => {
+          const request = decodeCommandWithHeaders(command)
 
-            try {
-              const payload =  request.payload
+          try {
+            const payload = request.payload
 
 
-              const metadata: EventMetadata = {}
-              const context: CommandContext = {
-                headers: {},
-                eventSourcing: eventSourcing.forContext(metadata),
-              }
-
-              if (this.config.overRideCommandHandler) {
-                const result = await this.config.overRideCommandHandler(handlerName, payload, context, connection)
-                if (result) {
-                  return new CommandResponse().setPayload(
-                    serializeObject(result as any),
-                  )
-                }
-              }
-              return new CommandResponse()
-
-            } catch (error) {
-              const message =
-                error instanceof ValidationError
-                  ? toErrorMessage(
-                    new BackendError(
-                      commandSchemaError,
-                      error.message,
-                      false,
-                      {type: error.type, path: error.path},
-                    ),
-                  )
-                  : toErrorMessage(error)
-              return new CommandResponse()
-                .setErrorCode(message.getErrorCode())
-                .setErrorMessage(message)
+            const metadata: EventMetadata = {}
+            const context: CommandContext = {
+              headers: {},
+              eventSourcing: this.eventSourcing!.forContext(metadata),
             }
-          },
-          100,
-        )
-      })
+
+            if (this.config.overRideCommandHandler) {
+              const result = await this.config.overRideCommandHandler(handlerName, payload, context, connection)
+              if (result) {
+                return new CommandResponse().setPayload(
+                  serializeObject(result as any),
+                )
+              }
+            }
+            return new CommandResponse()
+
+          } catch (error) {
+            const message =
+              error instanceof ValidationError
+                ? toErrorMessage(
+                  new BackendError(
+                    commandSchemaError,
+                    error.message,
+                    false,
+                    {type: error.type, path: error.path},
+                  ),
+                )
+                : toErrorMessage(error)
+            return new CommandResponse()
+              .setErrorCode(message.getErrorCode())
+              .setErrorMessage(message)
+          }
+        },
+        100,
+      )
+    })
   }
 
   private registerQueryHandlers(

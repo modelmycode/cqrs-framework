@@ -106,9 +106,10 @@ export class AxonApplication {
     }
 
     // -- Command
+    this.eventSourcing = new AxonAggregateEventSourcing()
+    await this.eventSourcing.connect(connection)
     if ((commandHandlers && commandHandlers.length > 0) || commandGenericHandlers?.length) {
-      this.eventSourcing = new AxonAggregateEventSourcing()
-      await this.eventSourcing.connect(connection)
+
       if (commandHandlers)
         await this.registerCommandHandlers(
           connection,

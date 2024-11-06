@@ -65,7 +65,7 @@ export class AxonConnectionCommandChannel {
   public disconnect(): void {
     if (this.stream) {
       this.commandHandlersByName.forEach((_, commandName) =>
-        this.deRegisterCommand(commandName),
+        this.sendCommandUnsubscription(commandName),
       )
       this.stream.end()
       this.stream = null
@@ -74,12 +74,6 @@ export class AxonConnectionCommandChannel {
       this.commandServiceClient.close()
       this.isDisconnected = true
     }
-  }
-
-  public deRegisterCommand(commandName: string): void {
-    this.commandHandlersByName.delete(commandName)
-    this.loadFactorsByCommandName.delete(commandName)
-    this.sendCommandUnsubscription(commandName)
   }
 
   public dispatchCommand(command: Command): Promise<CommandResponse> {

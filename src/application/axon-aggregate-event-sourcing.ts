@@ -50,7 +50,7 @@ export class AxonAggregateEventSourcing extends AggregateEventSourcing {
               .setAggregateIdentifier(msg.aggregateIdentifier)
               .setAggregateSequenceNumber(msg.sequenceNumber)
               .setTimestamp(msg.event.timestamp)
-              .setPayload(serializeObject(msg.event.payload, msg.prefix ? `${msg.prefix}.${ msg.event.name}` : msg.event.name))
+              .setPayload(serializeObject(msg.event.payload, msg.event.name))
 
             attachEventMetadata(event, {
               ...contextMetadata,

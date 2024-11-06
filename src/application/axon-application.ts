@@ -1,9 +1,9 @@
-import {CommandResponse, EventWithToken, QueryResponse} from 'axon-server-node-api'
+import {CommandResponse, QueryResponse} from 'axon-server-node-api'
 import {DatabaseError} from 'pg'
 import {from} from 'rxjs'
 import {ValidationError} from 'yup'
 
-import {OverrideProcess, TrackingEventProcessor} from '../axon-event-processor/tracking-event-processor'
+import {TrackingEventProcessor} from '../axon-event-processor/tracking-event-processor'
 import {TrackingTokenStore} from '../axon-event-processor/tracking-token-store'
 import {AxonServerConnectionFactory} from '../axon-server-connector/axon-server-connection-factory'
 import {
@@ -36,24 +36,21 @@ import {commandSchemaError} from "../api/error/common-error";
 import {errorCode} from "../api/error/error-code";
 import {Type} from "../utils/lang";
 
-export type OverRideCommandHandler = (commandName: string, payload: any, context: CommandContext, connection: AxonServerContextConnection) => Promise<any>
-
 interface AxonAppConfig {
   connection: AxonServerConnectionOptions
+
   commandHandlers?: Type[]
-  commandGenericHandlers?: string[]
   queryHandlers?: Type[]
   queryProjectors?: Type[]
   processors?: Type[]
   eventHandlers?: Type[]
-  overRideCommandHandler?: OverRideCommandHandler
+
   eventProcessor?: {
     /** If to queue event handlers, or run handlers for the same event in parallel */
     queueHandlers?: boolean
 
     /** If it is a new service, if to replay history events from -1, or only the newer events. */
     replayHistory?: boolean
-    overRideProcess?: OverrideProcess
   }
 
   database?: {
@@ -66,7 +63,7 @@ interface AxonAppConfig {
 
 export class AxonApplication {
   private readonly logger = logger.forContext('Axon')
-  public eventSourcing: AxonAggregateEventSourcing | undefined
+
   private connectionFactory = new AxonServerConnectionFactory(
     this.config.connection,
     this.logger,
@@ -83,7 +80,7 @@ export class AxonApplication {
     )
     await messageBus.connect(connection)
 
-    const {commandHandlers, commandGenericHandlers, queryHandlers, processors} = this.config
+    const {commandHandlers, queryHandlers, processors} = this.config
     const eventHandlers = Array.from(
       new Set([
         ...(processors || []),
@@ -106,23 +103,15 @@ export class AxonApplication {
     }
 
     // -- Command
-    this.eventSourcing = new AxonAggregateEventSourcing()
-    await this.eventSourcing.connect(connection)
-    if ((commandHandlers && commandHandlers.length > 0) || commandGenericHandlers?.length) {
-
-      if (commandHandlers)
-        await this.registerCommandHandlers(
-          connection,
-          commandHandlers,
-          this.eventSourcing,
-        )
-      if (commandGenericHandlers)
-        await this.registerGenericCommandHandlers(
-          connection,
-          commandGenericHandlers,
-        )
+    if (commandHandlers && commandHandlers.length > 0) {
+      const eventSourcing = new AxonAggregateEventSourcing()
+      await eventSourcing.connect(connection)
+      await this.registerCommandHandlers(
+        connection,
+        commandHandlers,
+        eventSourcing,
+      )
     }
-
 
     // -- Query
     if (queryHandlers && queryHandlers.length > 0) {
@@ -130,7 +119,7 @@ export class AxonApplication {
     }
 
     // -- Event & Automation
-    if (eventHandlers.length > 0 || commandGenericHandlers?.length) {
+    if (eventHandlers.length > 0) {
       if (!this.config.database?.postgres)
         throw new Error('Event handling requires postgres database config')
 
@@ -237,58 +226,6 @@ export class AxonApplication {
     })
   }
 
-  public async registerGenericCommandHandlers(
-    connection: AxonServerContextConnection,
-    handlerNames: string[],
-  ) {
-    new Set(handlerNames).forEach((handlerName) => {
-      connection.commandChannel.registerCommandHandler(
-        handlerName,
-        async (command) => {
-          const request = decodeCommandWithHeaders(command)
-
-          try {
-            const payload = request.payload
-
-
-            const metadata: EventMetadata = {}
-            const context: CommandContext = {
-              headers: {},
-              eventSourcing: this.eventSourcing!.forContext(metadata),
-            }
-
-            if (this.config.overRideCommandHandler) {
-              const result = await this.config.overRideCommandHandler(handlerName, payload, context, connection)
-              if (result) {
-                return new CommandResponse().setPayload(
-                  serializeObject(result as any),
-                )
-              }
-            }
-            return new CommandResponse()
-
-          } catch (error) {
-            const message =
-              error instanceof ValidationError
-                ? toErrorMessage(
-                  new BackendError(
-                    commandSchemaError,
-                    error.message,
-                    false,
-                    {type: error.type, path: error.path},
-                  ),
-                )
-                : toErrorMessage(error)
-            return new CommandResponse()
-              .setErrorCode(message.getErrorCode())
-              .setErrorMessage(message)
-          }
-        },
-        100,
-      )
-    })
-  }
-
   private registerQueryHandlers(
     connection: AxonServerContextConnection,
     handlers: Type[],
@@ -359,7 +296,6 @@ export class AxonApplication {
       handlers,
       this.config.eventProcessor?.queueHandlers,
       this.config.eventProcessor?.replayHistory,
-      this.config.eventProcessor?.overRideProcess,
     )
     this.eventProcessors.push(eventProcessor)
     await eventProcessor.start()

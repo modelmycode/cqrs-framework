@@ -23,7 +23,7 @@ import {encodeCommandHeaders} from './headers/command-headers'
 import {encodeQueryHeaders} from './headers/query-headers'
 
 export class MessageBus implements EventScheduler {
-  public connection: AxonServerContextConnection | null = null
+  private connection: AxonServerContextConnection | null = null
 
   constructor() {
     this.query = this.query.bind(this)

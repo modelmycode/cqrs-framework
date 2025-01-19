@@ -1,4 +1,5 @@
 
+import { Event } from '../api/message/event.interface'
 import { EventMetadata } from '../event-sourcing/aggregate-event-sourcing'
 
 export interface EventDetails {

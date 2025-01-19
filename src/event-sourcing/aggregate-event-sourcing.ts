@@ -1,4 +1,4 @@
-import { Event } from '..'
+import { Event } from '../api/message/event.interface'
 import { Type } from '../utils/lang'
 
 import { logger } from '../logging/logger'

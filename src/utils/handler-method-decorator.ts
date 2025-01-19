@@ -16,9 +16,9 @@ export function handlerMethodDecorator<T = unknown>(
     if (typeName) {
       typeNames = Array.isArray(typeName) ? typeName : [typeName]
     } else {
-       const reflectedName = target ? reflectParamTypes(target, propertyKey) : ''
+      const reflectedName = reflectParamTypes(target, propertyKey)[0]?.name
       if (!reflectedName) {
-        throw   new Error(
+        throw new Error(
           `Missing type on ${target.constructor.name}.${String(propertyKey)}()`,
         )
       }

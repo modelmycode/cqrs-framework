@@ -1,4 +1,5 @@
-import {Event} from '..'
+import {configLogger, logger} from '../logging/logger'
+import {Event} from '../api/message/event.interface'
 
 import {
   AggregateConcurrencyError,
@@ -6,7 +7,7 @@ import {
 } from './aggregate-event-sourcing'
 import {AggregateRoot} from './aggregate-root'
 import {eventSourcingHandler} from './event-sourcing-handler.decorator'
-
+configLogger();
 describe('AggregateEventSourcing', () => {
   class CounterStartedEvent implements Event {
     constructor(public readonly value: number) {
@@ -24,6 +25,7 @@ describe('AggregateEventSourcing', () => {
   }
 
   class Counter extends AggregateRoot {
+    private readonly logger = logger.forContext('EventSourcing')
     value = 0 // public for testing, aggregate properties should be private
     start(value: number) {
       this.apply(new CounterStartedEvent(value))

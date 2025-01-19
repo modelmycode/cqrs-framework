@@ -48,6 +48,7 @@ export class ProcessorSpec<TData, TProcessor extends Processor<TData>> {
           if (typeof data === 'function') {
             item.data = data(item.data)
           } else {
+            // @ts-ignore
             Object.assign(item.data, data)
           }
           await this.processor.process(item.data, item)
@@ -72,6 +73,7 @@ export class ProcessorSpec<TData, TProcessor extends Processor<TData>> {
             if (typeof data === 'function') {
               item.data = data(item.data)
             } else {
+              // @ts-ignore
               Object.assign(item.data, data)
             }
           }
@@ -219,6 +221,7 @@ export class ProcessorSpec<TData, TProcessor extends Processor<TData>> {
           const testData = expected.data as (data: TData) => void
           testData(task.data)
         } else {
+          // @ts-ignore
           const keys = Object.keys(expected.data)
           expect(pick(task.data, keys)).toEqual(pick(expected.data, keys))
         }

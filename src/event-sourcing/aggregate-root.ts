@@ -1,4 +1,4 @@
-import {Event, buildMessage} from '..'
+import {Event, buildMessage} from '../api'
 import {Type} from '../utils/lang'
 import {Observable, Subject} from 'rxjs'
 

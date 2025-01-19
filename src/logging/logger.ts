@@ -180,7 +180,7 @@ const productionFormat = winston.format((info) => {
   delete info.res
 
   info.label = {
-    ...info.label,
+    label: info.label,
     context: info.context,
   }
   delete info.context
@@ -254,8 +254,8 @@ function reportToSentry({
 
 function formatAxiosError(err: AxiosError) {
   return {
-    url: `[${err.config.method}] ${err.config.url}`,
-    request: err.config.data,
+    url: `[${err.config?.method}] ${err.config?.url}`,
+    request: err.config?.data,
     status: err.response?.status,
     response: err.response?.data,
   }

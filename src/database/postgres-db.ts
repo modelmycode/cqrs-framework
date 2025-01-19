@@ -1,4 +1,4 @@
-import { Pool, QueryConfig, QueryResultRow } from 'pg'
+import {Pool, QueryConfig, QueryConfigValues, QueryResultRow} from 'pg'
 
 import { logger } from '../logging/logger'
 
@@ -25,7 +25,7 @@ export class PostgresDb {
 
   public async query<R extends QueryResultRow = any, I extends any[] = any[]>(
     textOrConfig: string | QueryConfig<I>,
-    values?: I,
+    values?: QueryConfigValues<I>,
     logging: boolean = true,
   ): Promise<R[]> {
     if (!this.pool) throw new Error('Postgres db is not connected')

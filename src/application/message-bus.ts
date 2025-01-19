@@ -5,7 +5,7 @@ import {
   Query,
   QueryReturnType,
   RespondingCommand,
-} from '..'
+} from '../api'
 import {
   Command as CommandRequest,
   CommandResponse,

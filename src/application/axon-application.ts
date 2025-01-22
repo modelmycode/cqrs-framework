@@ -34,7 +34,7 @@ import {commandSchemas} from "../api/message/command-schemas";
 import {commandSchemaError} from "../api/error/common-error";
 import {errorCode} from "../api/error/error-code";
 import {Type} from "../utils/lang";
-import {ZodError, ZodSchema} from "zod";
+import {ZodError} from "zod";
 
 interface AxonAppConfig {
   connection: AxonServerConnectionOptions
@@ -170,7 +170,7 @@ export class AxonApplication {
 
             try {
               const payload = schema
-                ? await schema.parse(request.payload,)
+                ? await schema.parse(request.payload)
                 : request.payload
 
               const headers = await validateAuthToken(

@@ -1,9 +1,10 @@
 import 'reflect-metadata'
 
+import { ZodSchema } from 'zod'
+
 import { commandSchemas } from './command-schemas'
 import { MessageAccess, messageAccess } from './message-access'
 import { messageNames } from './message-names'
-import {ZodSchema} from "zod";
 
 export function command(
   name: string,

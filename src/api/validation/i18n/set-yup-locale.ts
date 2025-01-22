@@ -1,5 +1,5 @@
-import { setLocale } from 'yup'
-
-import { yupLocale } from './yup-locale'
-
-setLocale(yupLocale)
+// import { setLocale } from 'yup'
+//
+// import { yupLocale } from './yup-locale'
+//
+// setLocale(yupLocale)

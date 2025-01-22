@@ -1,7 +1,6 @@
 import {CommandResponse, QueryResponse} from 'axon-server-node-api'
 import {DatabaseError} from 'pg'
 import {from} from 'rxjs'
-import {ValidationError} from 'yup'
 
 import {TrackingEventProcessor} from '../axon-event-processor/tracking-event-processor'
 import {TrackingTokenStore} from '../axon-event-processor/tracking-token-store'
@@ -35,6 +34,7 @@ import {commandSchemas} from "../api/message/command-schemas";
 import {commandSchemaError} from "../api/error/common-error";
 import {errorCode} from "../api/error/error-code";
 import {Type} from "../utils/lang";
+import {ZodError} from "zod";
 
 interface AxonAppConfig {
   connection: AxonServerConnectionOptions
@@ -170,7 +170,7 @@ export class AxonApplication {
 
             try {
               const payload = schema
-                ? await schema.validate(request.payload, {stripUnknown: true})
+                ? await schema.parse(request.payload)
                 : request.payload
 
               const headers = await validateAuthToken(
@@ -205,13 +205,13 @@ export class AxonApplication {
               }
             } catch (error) {
               const message =
-                error instanceof ValidationError
+                error instanceof ZodError
                   ? toErrorMessage(
                     new BackendError(
                       commandSchemaError,
                       error.message,
                       false,
-                      {type: error.type, path: error.path},
+                      {type: error.name, path: error.stack},
                     ),
                   )
                   : toErrorMessage(error)

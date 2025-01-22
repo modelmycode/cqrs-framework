@@ -25,6 +25,7 @@ export * from './utils/i18n-utils';
 export * from './utils/axios-utils';
 export * from './utils/node';
 export * from './utils/lang';
+export * from './utils/testing';
 export * from './errors/backend-error';
 export * from './errors/unauthorized-error';
 export * from './errors/forbidden-error';

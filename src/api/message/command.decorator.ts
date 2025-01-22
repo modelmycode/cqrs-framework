@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 
-import { AnySchema } from 'yup'
+import { ZodSchema } from 'zod'
 
 import { commandSchemas } from './command-schemas'
 import { MessageAccess, messageAccess } from './message-access'
@@ -8,7 +8,7 @@ import { messageNames } from './message-names'
 
 export function command(
   name: string,
-  validation?: MessageAccess & { schema?: AnySchema | (() => AnySchema) },
+  validation?: MessageAccess & { schema?: ZodSchema | (() => ZodSchema) },
 ): ClassDecorator {
   return (target) => {
     messageNames.set(target, name)

@@ -1,3 +1,3 @@
-import { AnySchema } from 'yup'
+import { ZodSchema } from 'zod'
 
-export const commandSchemas = new Map<string, AnySchema | (() => AnySchema)>()
+export const commandSchemas = new Map<string, ZodSchema | (() => ZodSchema)>()

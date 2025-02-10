@@ -4,6 +4,7 @@ import { Type } from '../utils/lang'
 import { logger } from '../logging/logger'
 import { AggregateRoot } from './aggregate-root'
 import { getEventSourcingHandlerName } from './event-sourcing-handler.decorator'
+import {messageNames} from "../api";
 
 export interface EventMetadata {
   [key: string]: string | number | boolean | undefined
@@ -147,7 +148,7 @@ export class AggregateEventSourcing {
   ): Promise<AggregateEvent[]> {
     const events: AggregateEvent[] = []
     const subscription = aggregate.events$.subscribe((payload) => {
-      const name = payload.constructor.name
+      const name = messageNames.get(payload.constructor) || payload.constructor.name
       const event: AggregateEvent = { payload, name, timestamp: Date.now() }
       events.push(event)
       invokeEventSourcingHandler(aggregate, event)

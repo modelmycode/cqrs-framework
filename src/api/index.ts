@@ -4,6 +4,7 @@ export * from './message/command-schemas';
 export * from './message/query.interface';
 export * from './message/query.decorator';
 export * from './message/event.interface';
+export * from './message/event.decorator';
 export * from './message/message-utils';
 export * from './message/message-names';
 export * from './message/message-access';

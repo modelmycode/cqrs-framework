@@ -9,6 +9,7 @@ export * from './api/message/command-schemas';
 export * from './api/message/query.interface';
 export * from './api/message/query.decorator';
 export * from './api/message/event.interface';
+export * from './api/message/event.decorator';
 export * from './api/message/message-utils';
 export * from './api/message/message-names';
 export * from './api/message/message-access';
